@@ -16,3 +16,5 @@ dotnet add "${folderName}/${testProjectName}" reference "${folderName}/${project
 
 dotnet sln "${folderName}/${solutionName}.sln" add "${folderName}/${projectName}/${projectName}.fsproj"
 dotnet sln "${folderName}/${solutionName}.sln" add "${folderName}/${testProjectName}/${testProjectName}.fsproj"
+
+New-Item "${folderName}/${projectName}"/input.txt
