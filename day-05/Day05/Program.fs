@@ -1,52 +1,50 @@
 ﻿open System
 open System.IO
 
-type Coordinate = { X: int; Y: int }
-type LineSegment = { P1: Coordinate; P2: Coordinate }
+type Coordinate =
+    { X: int
+      Y: int }
+    static member parse(text: string) =
+        let parts = text.Split(",")
+        { X = int parts.[0]; Y = int parts.[1] }
 
-let parseCoordinate (text: string) =
-    let parts = text.Split(",")
-    { X = int parts.[0]; Y = int parts.[1] }
+type LineSegment =
+    { P1: Coordinate
+      P2: Coordinate }
+    static member parse(text: string) =
+        let coordinates = text.Split(" -> ") |> Array.map Coordinate.parse
 
-let parseLineSegment (text: string) =
-    let coordinates =
-        text.Split(" -> ") |> Array.map parseCoordinate
+        { P1 = coordinates.[0]
+          P2 = coordinates.[1] }
 
-    { P1 = coordinates.[0]
-      P2 = coordinates.[1] }
+    static member isHorizontal lineSegment = lineSegment.P1.Y = lineSegment.P2.Y
+    static member isVertical lineSegment = lineSegment.P1.X = lineSegment.P2.X
+
+    static member isHorizontalOrVertical lineSegment =
+        LineSegment.isHorizontal lineSegment
+        || LineSegment.isVertical lineSegment
+
+    static member getCoordinates lineSegment =
+        let getRange a b =
+            let increment = if a < b then 1 else -1
+            { a..increment..b }
+
+        let xValues = getRange lineSegment.P1.X lineSegment.P2.X
+        let yValues = getRange lineSegment.P1.Y lineSegment.P2.Y
+
+        if LineSegment.isHorizontal lineSegment then
+            xValues
+            |> Seq.map (fun x -> { X = x; Y = lineSegment.P1.Y })
+        else if LineSegment.isVertical lineSegment then
+            yValues
+            |> Seq.map (fun y -> { X = lineSegment.P1.X; Y = y })
+        else
+            Seq.zip xValues yValues
+            |> Seq.map (fun (x, y) -> { X = x; Y = y })
 
 let parseLineSegments (input: string) =
     input.Split(Environment.NewLine)
-    |> Array.map parseLineSegment
-
-let isHorizontal lineSegment = lineSegment.P1.Y = lineSegment.P2.Y
-let isVertical lineSegment = lineSegment.P1.X = lineSegment.P2.X
-
-let isHorizontalOrVertical lineSegment =
-    isHorizontal lineSegment || isVertical lineSegment
-
-let getRange a b =
-    let increment = if a < b then 1 else -1
-    { a .. increment .. b }
-
-let getXValues lineSegment =
-    getRange lineSegment.P1.X lineSegment.P2.X
-
-let getYValues lineSegment =
-    getRange lineSegment.P1.Y lineSegment.P2.Y
-
-let getCoordinatesOnLineSegment lineSegment =
-    if isHorizontal lineSegment then
-        lineSegment
-        |> getXValues
-        |> Seq.map (fun x -> { X = x; Y = lineSegment.P1.Y })
-    else if isVertical lineSegment then
-        lineSegment
-        |> getYValues
-        |> Seq.map (fun y -> { X = lineSegment.P1.X; Y = y })
-    else
-        Seq.zip (getXValues lineSegment) (getYValues lineSegment)
-        |> Seq.map (fun (x, y) -> { X = x; Y = y })
+    |> Array.map LineSegment.parse
 
 let countOverlaps coordinates =
     coordinates
@@ -57,14 +55,14 @@ let countOverlaps coordinates =
 let getOverlaps input =
     input
     |> parseLineSegments
-    |> Seq.filter isHorizontalOrVertical
-    |> Seq.collect getCoordinatesOnLineSegment
+    |> Seq.filter LineSegment.isHorizontalOrVertical
+    |> Seq.collect LineSegment.getCoordinates
     |> countOverlaps
 
 let getOverlapsIncludingDiagonals input =
     input
     |> parseLineSegments
-    |> Seq.collect getCoordinatesOnLineSegment
+    |> Seq.collect LineSegment.getCoordinates
     |> countOverlaps
 
 let input = File.ReadAllText "./input.txt"
