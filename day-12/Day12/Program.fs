@@ -1,81 +1,66 @@
 ﻿open System.IO
 
-type Connection =
-    { From: string
-      To: string }
-    static member parse(text: string) =
-        let parts = text.Split("-")
-        { From = parts.[0]; To = parts.[1] }
+let getNeighborMap (input: string array) =
+    input
+    |> Array.map (fun x -> x.Split("-"))
+    |> Seq.collect (fun x -> [ (x.[0], x.[1]); (x.[1], x.[0]) ])
+    |> Seq.groupBy fst
+    |> Seq.map (fun (from, tos) -> (from, tos |> Seq.map snd |> Seq.toArray))
+    |> Map
 
-let isUpperCase (text: string) = text.ToUpper() = text
+let isBigCave (cave: string) = cave.ToUpper() = cave
 
-let rec findPath connections (currentPath: string list) =
-    let last = List.head currentPath
+let isSmallCave (cave: string) =
+    cave <> "start"
+    && cave <> "end"
+    && not (isBigCave cave)
 
-    if last = "end" then
-        [| currentPath |]
+let rec findPath (neighborMap: Map<string, string []>) (currentPath: string list) =
+    let current = List.head currentPath
+
+    if current = "end" then
+        Seq.singleton currentPath
     else
-        let tos =
-            connections
-            |> Array.filter (fun c -> c.From = last)
-            |> Array.map (fun c -> c.To)
+        neighborMap.[current]
+        |> Seq.filter (fun c -> not (List.contains c currentPath) || isBigCave c)
+        |> Seq.collect (fun c -> findPath neighborMap (c :: currentPath))
 
-        let froms =
-            connections
-            |> Array.filter (fun c -> c.To = last)
-            |> Array.map (fun c -> c.From)
+let rec findPath2 (neighborMap: Map<string, string []>) (currentPath: string list) =
+    let current = List.head currentPath
 
-        Array.concat [| tos; froms |]
-        |> Array.filter (fun c -> (isUpperCase c || not (List.contains c currentPath)))
-        |> Array.collect (fun c -> findPath connections (c :: currentPath))
-
-
-let rec findPath2 connections (currentPath: string list) =
-    let last = List.head currentPath
-
-    if last = "end" then
-        [| currentPath |]
+    if current = "end" then
+        Seq.singleton currentPath
     else
-        let tos =
-            connections
-            |> Array.filter (fun c -> c.From = last)
-            |> Array.map (fun c -> c.To)
-
-        let froms =
-            connections
-            |> Array.filter (fun c -> c.To = last)
-            |> Array.map (fun c -> c.From)
-
         let hasVisitedSmallCaveTwice =
             currentPath
-            |> Seq.filter (isUpperCase >> not)
+            |> Seq.filter isSmallCave
             |> Seq.countBy id
             |> Seq.exists (fun (_, count) -> count > 1)
 
-        Array.concat [| tos; froms |]
-        |> Array.filter (fun c ->
-            (isUpperCase c
-             || not (List.contains c currentPath)
-             || (c <> "start"
-                 && c <> "end"
-                 && not hasVisitedSmallCaveTwice)))
-        |> Array.collect (fun c -> findPath2 connections (c :: currentPath))
-
+        neighborMap.[current]
+        |> Seq.filter (fun c ->
+            not (List.contains c currentPath)
+            || isBigCave c
+            || (isSmallCave c && not hasVisitedSmallCaveTwice))
+        |> Seq.collect (fun c -> findPath2 neighborMap (c :: currentPath))
 
 let getNumberOfPaths input =
-    let connections = input |> Array.map Connection.parse
+    let neighborMap = getNeighborMap input
 
-    findPath connections [ "start" ] |> Seq.length
+    findPath neighborMap [ "start" ] |> Seq.length
 
 let getNumberOfPaths2 input =
-    let connections = input |> Array.map Connection.parse
+    let neighborMap = getNeighborMap input
 
-    findPath2 connections [ "start" ] |> Seq.length
+    findPath2 neighborMap [ "start" ] |> Seq.length
 
 let input = File.ReadAllLines "./input.txt"
 
 let resultPart1 = getNumberOfPaths input
 printfn "Result Part 1: %d" resultPart1
 
+let stopWatch = new System.Diagnostics.Stopwatch()
+stopWatch.Start()
 let resultPart2 = getNumberOfPaths2 input
-printfn "Result Part 2: %d" resultPart2
+stopWatch.Stop()
+printfn "Result Part 2: %d in %dms" resultPart2 stopWatch.ElapsedMilliseconds

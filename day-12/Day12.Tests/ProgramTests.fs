@@ -19,7 +19,7 @@ let getNumberOfPathsSmall () =
 
 
 [<Test>]
-let getNumberOfPathsLarger () =
+let getNumberOfPathsMiddle () =
     let input =
         [| "dc-end"
            "HN-start"
@@ -36,7 +36,7 @@ let getNumberOfPathsLarger () =
     Assert.AreEqual(19, actual)
 
 [<Test>]
-let getNumberOfPathsEvenLarger () =
+let getNumberOfPathsLarge () =
     let input =
         [| "fs-end"
            "he-DX"
@@ -61,7 +61,7 @@ let getNumberOfPathsEvenLarger () =
     Assert.AreEqual(226, actual)
 
 [<Test>]
-let getNumberOfPathsSmall2 () =
+let getNumberOfPaths2Small () =
     let input =
         [| "start-A"
            "start-b"
@@ -76,7 +76,7 @@ let getNumberOfPathsSmall2 () =
 
 
 [<Test>]
-let getNumberOfPathsLarger2 () =
+let getNumberOfPaths2Middle () =
     let input =
         [| "dc-end"
            "HN-start"
@@ -93,7 +93,7 @@ let getNumberOfPathsLarger2 () =
     Assert.AreEqual(103, actual)
 
 [<Test>]
-let getNumberOfPathsEvenLarger2 () =
+let getNumberOfPaths2Large () =
     let input =
         [| "fs-end"
            "he-DX"

@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Day12\Day12.fsproj" />
+    <ProjectReference Include="..\Day13\Day13.fsproj" />
   </ItemGroup>
 
 </Project>
